@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz del Caffè - Scopri il Tuo Profilo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #8B4513 0%, #D2B48C 50%, #F5DEB3 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .floating-beans {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .bean {
+            position: absolute;
+            width: 20px;
+            height: 30px;
+            background: #4A2C17;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0.6;
+            animation: float 15s infinite linear;
+            transform: translateY(110vh);
+        }
+
+        .bean::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 60%;
+            background: #8B4513;
+            transform: translate(-50%, -50%);
+            border-radius: 2px;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(110vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-30vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(245, 222, 179, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(139, 69, 19, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #4A2C17;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            color: #8B4513;
+            font-size: 1.2em;
+            font-style: italic;
+        }
+
+        .quiz-container {
+            background: rgba(245, 222, 179, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(139, 69, 19, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+        }
+
+        .question {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .question.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question h3 {
+            color: #4A2C17;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .answers {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .answer {
+            background: rgba(210, 180, 140, 0.8);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #4A2C17;
+            font-weight: 500;
+        }
+
+        .answer:hover {
+            background: rgba(139, 69, 19, 0.2);
+            border-color: #8B4513;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .answer.selected {
+            background: #8B4513;
+            color: #F5DEB3;
+            border-color: #4A2C17;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: #F5DEB3;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #A0522D, #8B4513);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress {
+            text-align: center;
+            color: #8B4513;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8B4513, #A0522D);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .profile-card {
+            background: rgba(139, 69, 19, 0.1);
+            border: 2px solid #8B4513;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .profile-title {
+            color: #4A2C17;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .profile-description {
+            color: #8B4513;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .coffee-recommendation {
+            background: rgba(210, 180, 140, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .coffee-title {
+            color: #4A2C17;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            background: linear-gradient(135deg, #4A2C17, #8B4513);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .quiz-container {
+                padding: 20px;
+            }
+
+            .question h3 {
+                font-size: 1.2em;
+            }
+
+            .answers {
+                gap: 10px;
+            }
+
+            .answer {
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+
+            .navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-beans" id="floatingBeans"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>☕ Quiz del Caffè</h1>
+            <p>Scopri il tuo profilo caffeicolo e la miscela perfetta per te</p>
+        </div>
+
+        <div class="quiz-container">
+            <div class="progress" id="progressSection">
+                <span id="questionNumber">1</span> di 10
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="question active" data-question="1">
+                <h3>Come ti svegli la mattina?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Mi trascino fuori dal letto come un zombie</div>
+                    <div class="answer" data-value="B">Mi sveglio lentamente, ho bisogno dei miei tempi</div>
+                    <div class="answer" data-value="C">Salto giù dal letto, pronto per la giornata</div>
+                    <div class="answer" data-value="D">Dipende da come ho dormito</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="2">
+                <h3>Qual è il tuo primo pensiero quando senti l'aroma del caffè?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">"Finalmente! Ne ho bisogno ADESSO"</div>
+                    <div class="answer" data-value="B">"Mmm, che profumo delizioso"</div>
+                    <div class="answer" data-value="C">"È il momento della mia pausa"</div>
+                    <div class="answer" data-value="D">"Mi chiedo che tipo di caffè sia"</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="3">
+                <h3>Se dovessi scegliere un superpotere legato al caffè, quale sarebbe?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Avere energia infinita con un solo sorso</div>
+                    <div class="answer" data-value="B">Rendere perfetto qualsiasi caffè con un tocco</div>
+                    <div class="answer" data-value="C">Fermare il tempo durante la pausa caffè</div>
+                    <div class="answer" data-value="D">Teletrasportarmi nella migliore caffetteria del mondo</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="4">
+                <h3>Come reagisci quando finisce il caffè a casa?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">PANICO! Corro subito a comprarne altro</div>
+                    <div class="answer" data-value="B">Mi dispiace, ma posso arrangiarmi con il tè</div>
+                    <div class="answer" data-value="C">Vado al bar più vicino per la mia dose</div>
+                    <div class="answer" data-value="D">È l'occasione per provare quel posto nuovo</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="5">
+                <h3>Quando bevi caffè con gli amici, tu sei quello che...</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Finisce per primo e ne ordina subito un altro</div>
+                    <div class="answer" data-value="B">Si gode la chiacchierata sorseggiando piano</div>
+                    <div class="answer" data-value="C">Guarda l'orologio perché ha cose da fare</div>
+                    <div class="answer" data-value="D">Fa domande al barista sulle origini del caffè</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="6">
+                <h3>Se il caffè fosse una persona, che tipo di relazione avresti?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Una dipendenza totale - non posso vivere senza</div>
+                    <div class="answer" data-value="B">Un matrimonio felice - ci completiamo</div>
+                    <div class="answer" data-value="C">Un partner affidabile - sempre lì quando serve</div>
+                    <div class="answer" data-value="D">Una storia d'amore appassionata - sempre nuove scoperte</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="7">
+                <h3>Cosa fai mentre aspetti che il caffè sia pronto?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Resto lì impalato, aspettando ogni secondo</div>
+                    <div class="answer" data-value="B">Preparo la colazione con calma</div>
+                    <div class="answer" data-value="C">Controllo le email o organizzo la giornata</div>
+                    <div class="answer" data-value="D">Leggo curiosità sul caffè sullo smartphone</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="8">
+                <h3>Al bar, come ordini il caffè?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">"Un caffè, veloce!" - sei già nervoso senza caffeina</div>
+                    <div class="answer" data-value="B">"Un bel caffè, grazie" - cordiale ma semplice</div>
+                    <div class="answer" data-value="C">"Il solito" - il barista ti conosce già</div>
+                    <div class="answer" data-value="D">"Che miscela usate oggi?" - vuoi sapere tutto</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="9">
+                <h3>Come ti comporti se qualcuno critica il tuo caffè preferito?</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Non me ne frega, l'importante è che funzioni</div>
+                    <div class="answer" data-value="B">Difendi gentilmente i tuoi gusti</div>
+                    <div class="answer" data-value="C">Spieghi razionalmente perché ti piace</div>
+                    <div class="answer" data-value="D">Proponi un caffè-tasting per cambiare idea</div>
+                </div>
+            </div>
+
+            <div class="question" data-question="10">
+                <h3>Se dovessi descrivere il tuo momento caffè ideale...</h3>
+                <div class="answers">
+                    <div class="answer" data-value="A">Veloce, efficace, che mi dia la carica per affrontare tutto</div>
+                    <div class="answer" data-value="B">Rilassante, in buona compagnia, senza fretta</div>
+                    <div class="answer" data-value="C">Organizzato, parte della mia routine quotidiana</div>
+                    <div class="answer" data-value="D">Esplorativo, sempre alla ricerca di nuove sensazioni</div>
+                </div>
+            </div>
+
+            <div class="navigation" id="navigationSection">
+                <button class="btn" id="prevBtn" disabled>Indietro</button>
+                <div class="progress">
+                    <span id="currentQuestion">Domanda 1</span>
+                </div>
+                <button class="btn" id="nextBtn" disabled>Avanti</button>
+            </div>
+
+            <div class="result" id="result">
+                <div class="profile-card" id="profileCard"></div>
+                <button class="btn restart-btn">Ricomincia il Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variabili di stato
+            let currentQuestion = 1;
+            const totalQuestions = 10;
+            let answers = {};
+            
+            // Elementi UI
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const restartBtn = document.querySelector('.restart-btn');
+            
+            // Inizializzazione
+            function initQuiz() {
+                currentQuestion = 1;
+                answers = {};
+                
+                // Mostra solo la prima domanda
+                document.querySelectorAll('.question').forEach((q, index) => {
+                    q.style.display = index === 0 ? 'block' : 'none';
+                    q.classList.toggle('active', index === 0);
+                });
+                
+                // Resetta le selezioni
+                document.querySelectorAll('.answer').forEach(a => {
+                    a.classList.remove('selected');
+                });
+                
+                // Nascondi il risultato
+                document.getElementById('result').style.display = 'none';
+                document.getElementById('result').classList.remove('show');
+                
+                // Mostra progresso e navigazione
+                document.getElementById('progressSection').style.display = 'block';
+                document.getElementById('navigationSection').style.display = 'flex';
+                
+                // Aggiorna UI
+                updateProgress();
+                updateNavigation();
+            }
+            
+            // Gestione delle risposte
+            document.querySelectorAll('.answer').forEach(answer => {
+                answer.addEventListener('click', function() {
+                    // Rimuovi selezione precedente
+                    this.closest('.question').querySelectorAll('.answer').forEach(a => {
+                        a.classList.remove('selected');
+                    });
+                    
+                    // Seleziona la risposta corrente
+                    this.classList.add('selected');
+                    
+                    // Salva la risposta
+                    const questionNum = this.closest('.question').dataset.question;
+                    answers[questionNum] = this.dataset.value;
+                    
+                    // Abilita il pulsante Avanti
+                    nextBtn.disabled = false;
+                });
+            });
+            
+            // Navigazione
+            prevBtn.addEventListener('click', previousQuestion);
+            nextBtn.addEventListener('click', nextQuestion);
+            restartBtn.addEventListener('click', initQuiz);
+            
+            function nextQuestion() {
+                // Nascondi la domanda corrente
+                const currentQ = document.querySelector(`.question[data-question="${currentQuestion}"]`);
+                if (currentQ) {
+                    currentQ.style.display = 'none';
+                    currentQ.classList.remove('active');
+                }
+                
+                // Vai alla prossima domanda
+                currentQuestion++;
+                
+                if (currentQuestion <= totalQuestions) {
+                    // Mostra la nuova domanda
+                    const nextQ = document.querySelector(`.question[data-question="${currentQuestion}"]`);
+                    if (nextQ) {
+                        nextQ.style.display = 'block';
+                        nextQ.classList.add('active');
+                    }
+                    
+                    // Aggiorna UI
+                    updateProgress();
+                    updateNavigation();
+                } else {
+                    // Quiz completato
+                    showResult();
+                }
+            }
+            
+            function previousQuestion() {
+                // Nascondi la domanda corrente
+                const currentQ = document.querySelector(`.question[data-question="${currentQuestion}"]`);
+                if (currentQ) {
+                    currentQ.style.display = 'none';
+                    currentQ.classList.remove('active');
+                }
+                
+                // Vai alla domanda precedente
+                currentQuestion--;
+                
+                // Mostra la domanda
+                const prevQ = document.querySelector(`.question[data-question="${currentQuestion}"]`);
+                if (prevQ) {
+                    prevQ.style.display = 'block';
+                    prevQ.classList.add('active');
+                }
+                
+                // Aggiorna UI
+                updateProgress();
+                updateNavigation();
+            }
+            
+            function updateProgress() {
+                const progress = (currentQuestion / totalQuestions) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('questionNumber').textContent = currentQuestion;
+                document.getElementById('currentQuestion').textContent = `Domanda ${currentQuestion}`;
+                
+                // Aggiorna il testo del pulsante Avanti
+                nextBtn.textContent = currentQuestion === totalQuestions ? 'Risultato' : 'Avanti';
+            }
+            
+            function updateNavigation() {
+                prevBtn.disabled = currentQuestion === 1;
+                nextBtn.disabled = !answers[currentQuestion];
+            }
+            
+            function showResult() {
+                // Nascondi le domande e la navigazione
+                document.querySelectorAll('.question').forEach(q => q.style.display = 'none');
+                document.getElementById('navigationSection').style.display = 'none';
+                document.getElementById('progressSection').style.display = 'none';
+                
+                // Calcola il profilo
+                const profile = calculateProfile();
+                const profileCard = document.getElementById('profileCard');
+                
+                // Mostra il risultato
+                profileCard.innerHTML = `
+                    <h2 class="profile-title">${profile.title}</h2>
+                    <p class="profile-description">${profile.description}</p>
+                    <div class="coffee-recommendation">
+                        <h3 class="coffee-title">☕ Il Tuo Caffè Ideale: ${profile.coffee.name}</h3>
+                        <p>${profile.coffee.description}</p>
+                    </div>
+                `;
+                
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').classList.add('show');
+            }
+            
+            function calculateProfile() {
+                const scoreA = Object.values(answers).filter(a => a === 'A').length;
+                const scoreB = Object.values(answers).filter(a => a === 'B').length;
+                const scoreC = Object.values(answers).filter(a => a === 'C').length;
+                const scoreD = Object.values(answers).filter(a => a === 'D').length;
+                
+                const profiles = {
+                    A: {
+                        title: "Il Vampiro della Caffeina",
+                        description: "Sei quella persona che i colleghi evitano prima del primo caffè della giornata...",
+                        coffee: {
+                            name: "Espresso Bomba Energetica",
+                            description: "Miscela extra forte 60% Arabica Brasile Santos, 40% Robusta Vietnam..."
+                        }
+                    },
+                    B: {
+                        title: "L'Epicureo del Chicco",
+                        description: "Sei il tipo di persona che trasforma il caffè in un'esperienza sensoriale...",
+                        coffee: {
+                            name: "Armonia del Palato",
+                            description: "Blend artigianale 75% Arabica Colombia Supremo..."
+                        }
+                    },
+                    C: {
+                        title: "Il Cronometrista della Routine",
+                        description: "Il tuo caffè ha un orario preciso e guai a chi te lo tocca...",
+                        coffee: {
+                            name: "Precisione Costante",
+                            description: "Miscela standardizzata 70% Arabica Brasile Cerrado..."
+                        }
+                    },
+                    D: {
+                        title: "L'Indiana Jones del Caffè",
+                        description: "Per te il caffè è un'avventura continua...",
+                        coffee: {
+                            name: "Avventura Sensoriale - Rotazione Mensile",
+                            description: "Ogni mese un single origin diverso..."
+                        }
+                    }
+                };
+                
+                const scores = [
+                    { type: 'A', score: scoreA },
+                    { type: 'B', score: scoreB },
+                    { type: 'C', score: scoreC },
+                    { type: 'D', score: scoreD }
+                ];
+                
+                scores.sort((a, b) => b.score - a.score);
+                return profiles[scores[0].type];
+            }
+            
+            // Avvia il quiz
+            initQuiz();
+            createFloatingBeans();
+            
+            function createFloatingBeans() {
+                const container = document.getElementById('floatingBeans');
+                const numberOfBeans = 15;
+                
+                function createBean() {
+                    const bean = document.createElement('div');
+                    bean.className = 'bean';
+                    bean.style.left = Math.random() * 100 + '%';
+                    bean.style.animationDelay = Math.random() * 5 + 's';
+                    bean.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                    container.appendChild(bean);
+                    
+                    setTimeout(() => {
+                        bean.remove();
+                    }, (parseFloat(bean.style.animationDuration) + parseFloat(bean.style.animationDelay)) * 1000);
+                }
+                
+                for (let i = 0; i < numberOfBeans; i++) {
+                    setTimeout(createBean, i * 1000);
+                }
+                
+                setInterval(() => {
+                    if (Math.random() < 0.7) createBean();
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
